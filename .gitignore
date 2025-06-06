@@ -163,3 +163,7 @@ cython_debug/
 #Data
 
 data/
+
+#Document
+
+AUTOMATIC ASSEMBLY INSTRUCTION GENERATION.odt/
