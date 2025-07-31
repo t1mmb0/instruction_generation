@@ -172,3 +172,7 @@ documents/
 #Test Document
 
 test.py
+
+# Ldraw
+/ldraw-py/
+/toolbox-py/
