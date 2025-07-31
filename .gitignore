@@ -163,6 +163,7 @@ cython_debug/
 #Data
 
 data/
+data_ikea/
 
 #Document
 
