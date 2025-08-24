@@ -1,9 +1,0 @@
-BLItemNo,ElementId,LdrawId,PartName,BLColorId,LDrawColorId,ColorName,ColorCategory,Qty,Weight
-14716,6055541,14716.dat,Brick 1 x 1 x 3,1,15,White,Solid Colors,1,1.24
-3001,300101,3001.dat,Brick 2 x 4,1,15,White,Solid Colors,2,2.32
-3004,300401,3004.dat,Brick 1 x 2,1,15,White,Solid Colors,1,0.8
-3005,300501,3005.dat,Brick 1 x 1,1,15,White,Solid Colors,1,0.44
-6908,,6908.dat,"Brick, Round 1 x 1 x 2/3 Dome Top",1,15,White,Solid Colors,2,0.16
-,,,,,,,,,
-Total qty,Total Weight,,,,,,,,
-7,7.440001,,,,,,,,
