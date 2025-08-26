@@ -176,3 +176,6 @@ test.py
 # Ldraw
 /ldraw-py/
 /toolbox-py/
+
+#API KEY
+API_KEY.txt
