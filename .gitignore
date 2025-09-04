@@ -160,10 +160,6 @@ cython_debug/
 #.idea/
 
 
-#Data
-
-data/
-data_ikea/
 
 #Document
 
