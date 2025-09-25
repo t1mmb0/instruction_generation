@@ -114,15 +114,4 @@ metrics = trainer.evaluate(test_data, k_list=[1, 3, 10, 50])
 print(
     "\nEvaluation Results"
     "\n------------------"
-    f"\nROC-AUC:           {metrics['roc_auc']:.4f}"
-    f"\nAverage Precision: {metrics['average_precision']:.4f}"
-    "\nHits@K:"
-)
-for k, v in metrics["hits@k"].items():
-    print(f"  Hits@{k:<3}: {v:.4f}")
-
-
-# -----------------------------
-# End
-# -----------------------------
-print("\n[7] End of Pipeline ✅")
+    f"\nROC-AUC:           {metrics['roc_auc']:.4f}")
