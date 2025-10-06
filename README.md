@@ -2,7 +2,7 @@
 
 ## Zielsetzung
 Ziel des Projekts ist die automatische Generierung von Montageanleitungen auf Basis von Bauteildaten.  
-Da reale CAD-Daten schwer zugänglich sind, wird für den Prototypen auf **LEGO®-Modelle** zurückgegriffen.  
+Da reale CAD-Daten schwer zugänglich sind, wird für den Prototypen auf **LEGO-Modelle** zurückgegriffen.  
 LEGO eignet sich ideal, da:
 - Steckverbindungen klar definiert sind,  
 - wiederkehrende Strukturen auftreten,  
