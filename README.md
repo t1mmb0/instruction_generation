@@ -36,11 +36,16 @@ Da kein bestehender Datensatz vorliegt, wurde ein eigener LEGO-Datensatz erstell
    - Enthält alle Bauteile mit 3D-Positionen.  
 
 2. **Anreicherung über Rebrickable API**  
-   - Zusätzliche Metadaten: Kategorie, Dimension, Farbe etc.  
+   - Zusätzliche Metadaten: Kategorie, Dimension  
 
 3. **Erstellung der Eingabedaten (Features X)**  
    - Gespeichert in: `df_<modelname>.csv`  
-
+   - Struktur:
+     ```
+      part_id,color,x,y,z,a,b,c,d,e,f,g,h,i,part,part_name,part_cat_id,year_from,year_to,category_name,dim1,dim2,dim3,bracket_info
+      0,8,0.0,0.0,0.0,0.0,0.0,1.0,0.0,1.0,0.0,-1.0,0.0,0.0,6112,Brick 1 x 12,11.0,1993.0,2025.0,Bricks,1.0,12.0,,
+      1,8,20.0,0.0,0.0,0.0,0.0,1.0,0.0,1.0,0.0,-1.0,0.0,0.0,6112,Brick 1 x 12,11.0,1993.0,2025.0,Bricks,1.0,12.0,,
+     ```
 4. **Erstellung der Zielverbindungen (Labels y)**  
    - Gespeichert in: `gt_<modelname>.csv`  
    - Struktur:
@@ -49,7 +54,8 @@ Da kein bestehender Datensatz vorliegt, wurde ein eigener LEGO-Datensatz erstell
      123, 456, 1
      789, 101, 0
      ```
-
+5. **Erstellung des Modell-Graph**
+   - Die Knoten des Modell-Graph werden über `df_<modelname>.csv` erstellt. Die tatsächlichen Verbindungen werden über das gt Dataset erzeugt.
 ---
 
 ## Trainingspipeline
@@ -74,7 +80,7 @@ Da kein bestehender Datensatz vorliegt, wurde ein eigener LEGO-Datensatz erstell
   1. Erweiterung der Datenbasis um weitere Modelle  
   2. Fixierte Seeds und deterministische Splits  
   3. Modellvergleich (GCN, GraphSAGE, GAT)  
-  4. Integration zusätzlicher Features (Farbe, Kategorie, Geometrie)  
+  4. Fine-Tuning der Modellstruktur  
 
 ---
 
