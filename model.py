@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
 from sklearn.metrics import roc_auc_score, average_precision_score
+import pandas as pd
+import numpy as np
 
 class GCN(torch.nn.Module):
     """
@@ -154,6 +156,18 @@ class Trainer:
         return loss.item()
 
     @torch.no_grad()
+    def _forward_scores(self, data):
+        """Helper: Forward Pass for evaluation, Scores, Labels, Edges."""
+
+        self.model.eval()
+        z = self.model(data)
+        logits = self.model.decode(z, data.edge_label_index)
+        scores = torch.sigmoid(logits).cpu().numpy()
+        y = data.edge_label.cpu().numpy()
+        edges = data.edge_label_index.cpu().T.numpy()
+        return scores, y, edges
+    
+    @torch.no_grad()
     def evaluate(self, data, k_list=[10]):
         """
         Evaluate the model on a given dataset split.
@@ -176,12 +190,7 @@ class Trainer:
             - 'hits@K' : dict
                 Hits@K scores for each specified K in `k_list`.
         """
-        self.model.eval()
-        z = self.model(data)
-        logits = self.model.decode(z, data.edge_label_index)
-        scores = torch.sigmoid(logits).cpu().numpy()
-        y = data.edge_label.cpu().numpy()
-
+        scores, y, _ = self._forward_scores(data)
         # Standard metrics
         roc_auc = roc_auc_score(y, scores)
         ap = average_precision_score(y, scores)
@@ -198,3 +207,44 @@ class Trainer:
             "average_precision": ap,
             "hits@k": hits_at_k,
         }
+    
+    @torch.no_grad()
+    def analyze_predictions(self, data, threshold=0.5):
+        scores, y, _ = self._forward_scores(data)
+        y_pred = (scores >= threshold).astype(int)
+
+        TP = np.sum((y_pred == 1) & (y == 1))
+        FP = np.sum((y_pred == 1) & (y == 0))
+        FN = np.sum((y_pred == 0) & (y == 1))
+        TN = np.sum((y_pred == 0) & (y == 0))
+
+        precision = TP / (TP + FP + 1e-9)
+        recall = TP / (TP + FN + 1e-9)
+        f1 = 2 * precision * recall / (precision + recall + 1e-9)
+
+        return {
+            "precision": precision,
+            "recall": recall,
+            "f1": f1,
+            "TP": TP,
+            "FP": FP,
+            "FN": FN,
+            "TN": TN
+        }
+    
+    @torch.no_grad()
+    def build_prediction_dataframe(self, data, threshold = 0.5):
+        scores, y, edges = self._forward_scores(data)
+        y_pred = (scores >= threshold).astype(int)
+        results = pd.DataFrame({
+            "u": edges[:, 0],
+            "v": edges[:, 1],
+            "true": y,
+            "score": scores,
+            "pred": y_pred
+        })
+
+        return results
+
+
+

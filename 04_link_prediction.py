@@ -15,63 +15,120 @@ from sklearn.preprocessing import StandardScaler
 from model import GCN, Trainer
 from graph import Graph
 
-
 # -----------------------------
-# Load Datasets
+# Parameters
 # -----------------------------
-print("\n[1] Loading datasets ...")
-model_df = pd.read_csv("./results/df_20009-1.csv", na_values=["", " "])
-gt = pd.read_csv("./results/gt_20009-1.csv", na_values=["", " "])
-print(f"  -> model_df: {model_df.shape} | gt: {gt.shape}")
+model_ids = ("20006-1", "20009-1")
 
+# Preparation Global Scaler
 
-# -----------------------------
-# Build Graph Data Object
-# -----------------------------
-print("\n[2] Building Data object ...")
-
-# Build feature matrix
-Feature_Matrix = model_df.select_dtypes(include=["number"]).drop(columns=["part_id"], errors="ignore")
-Feature_Matrix = Feature_Matrix.replace([np.inf, -np.inf], np.nan).fillna(0.0)
-
-# Standardisation
 scaler = StandardScaler()
-Feature_Matrix = scaler.fit_transform(Feature_Matrix.values)
+global_features = pd.DataFrame()
+feature_columns = None
+for model_id in model_ids:
+    parts_df = pd.read_csv(f"./results/df_{model_id}.csv", na_values=["", " "])
+    X_df = (
+        parts_df.select_dtypes(include=["number"])
+        .drop(columns=["part_id"], errors="ignore")
+        .replace([np.inf, -np.inf], np.nan)
+        .fillna(0.0)
+    )
+    if feature_columns is None:
+        feature_columns = X_df.columns  # beim ersten Modell speichern
+    else:
+        # Fehlende Spalten ergänzen, damit alle Modelle dieselben Spalten haben
+        for col in feature_columns:
+            if col not in X_df.columns:
+                X_df[col] = 0.0  # fehlende Spalten mit 0 auffüllen
+        X_df = X_df[feature_columns]  # gleiche Spaltenreihenfolge erzwingen
 
-x = torch.tensor(Feature_Matrix, dtype=torch.float32)
+    global_features = pd.concat([global_features, X_df])
 
-# Positive edges
-pos_edges = gt[gt["connected"] == 1][["part_id_1", "part_id_2"]]
-pos_edge_index = torch.tensor(pos_edges.values.T, dtype=torch.long)
-
-# Undirected edge index
-edge_index = torch.cat([pos_edge_index, pos_edge_index.flip(0)], dim=1)
-
-# Build Data object
-data = Data(x=x, edge_index=edge_index) 
-print(f"  -> Nodes: {data.num_nodes}, Edges: {data.num_edges}, Features: {data.num_features}")
+scaler.fit(global_features)
+del global_features
 
 
 # -----------------------------
-# Split Data
+# Build Graphs per Model
 # -----------------------------
-print("\n[3] Splitting Data (Train/Val/Test) ...")
 
-splitter = T.RandomLinkSplit(
-    num_val=0.1,
-    num_test=0.1,
-    is_undirected=True,
-    add_negative_train_samples=True,
-)
 
-train_data, val_data, test_data = splitter(data)
-print("  -> Finished splitting.")
+train_graphs = list()
+val_graphs = list()
+test_graphs = list()
+
+for model_id in model_ids:
+    print(f"\n[1] Loading {model_id} ...")
+    parts_df = pd.read_csv(f"./results/df_{model_id}.csv", na_values=["", " "])
+    edges_df = pd.read_csv(f"./results/gt_{model_id}.csv", na_values=["", " "])
+
+    X_df = (
+        parts_df.select_dtypes(include=["number"])
+        .drop(columns=["part_id"], errors="ignore")
+        .replace([np.inf, -np.inf], np.nan)
+        .fillna(0.0)
+    )
+
+
+    # -----------------------------
+    # Transform Data
+    # -----------------------------
+
+    # gleiche Spalten wie beim Fitten erzwingen
+    for col in feature_columns:
+        if col not in X_df.columns:
+            X_df[col] = 0.0
+    X_df = X_df[feature_columns]
+
+    X_scaled = scaler.transform(X_df.values)
+
+
+    X_scaled = scaler.transform(X_df.values)
+    x = torch.tensor(X_scaled, dtype=torch.float32)
+
+    pos_edge_pairs = edges_df.query("connected == 1")[["part_id_1", "part_id_2"]]
+    edge_index_pos = torch.tensor(pos_edge_pairs.values.T, dtype=torch.long)
+    edge_index_undir = torch.cat([edge_index_pos, edge_index_pos.flip(0)], dim=1)
+
+    graph_data = Data(x=x, edge_index=edge_index_undir)
+    graph_data.model_id = model_id
+
+
+    # -----------------------------
+    # Split Data
+    # -----------------------------
+
+
+    print("\n[3] Splitting Data (Train/Val/Test) ...")
+
+    splitter = T.RandomLinkSplit(
+        num_val=0.1,
+        num_test=0.1,
+        is_undirected=True,
+        add_negative_train_samples=True,
+    )
+
+    train_data, val_data, test_data = splitter(graph_data)
+
+    train_graphs.append(train_data)
+    val_graphs.append(val_data)
+    test_graphs.append(test_data)
+
+    print("  -> Finished splitting.")
+
+    # -----------------------------
+    # Debug
+    # -----------------------------
+    print(f"Message Passing Edges: {train_data.edge_index.size(1)}")
+    print(f"Positive Edges: {train_data.edge_label.sum()}")
+    print(f"Negative Edges: {len(train_data.edge_label)- train_data.edge_label.sum()}")
+
 
 #------------------------------
 #Show Graph
 #------------------------------
-G = Graph(data=data)
-G.visualize_interactive()
+G = Graph(data=graph_data)
+#G.visualize_interactive()
 
 # -----------------------------
 # Build Model
@@ -82,7 +139,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 train_data, val_data, test_data = train_data.to(device), val_data.to(device), test_data.to(device)
 
 model = GCN(
-    in_channels=data.num_features,
+    in_channels=graph_data.num_features,
     hidden_channels=16,
     out_channels=4,
 ).to(device)
@@ -115,3 +172,17 @@ print(
     "\nEvaluation Results"
     "\n------------------"
     f"\nROC-AUC:           {metrics['roc_auc']:.4f}")
+
+confusion_matrix_metrics = trainer.analyze_predictions(test_data, threshold=0.6)
+
+print("\n[ Confusion Matrix Metrics ]")
+print("──────────────────────────────────────────────")
+print(f"  True Positives (TP): {confusion_matrix_metrics['TP']:>6}")
+print(f"  False Positives (FP): {confusion_matrix_metrics['FP']:>6}")
+print(f"  False Negatives (FN): {confusion_matrix_metrics['FN']:>6}")
+print(f"  True Negatives (TN): {confusion_matrix_metrics['TN']:>6}")
+print("──────────────────────────────────────────────")
+print(f"  Precision: {confusion_matrix_metrics['precision']*100:6.2f}%")
+print(f"  Recall:    {confusion_matrix_metrics['recall']*100:6.2f}%")
+print(f"  F1 Score:  {confusion_matrix_metrics['f1']*100:6.2f}%")
+print("──────────────────────────────────────────────")
