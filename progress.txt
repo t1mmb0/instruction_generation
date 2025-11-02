@@ -1,3 +1,0 @@
-Data_Loader Objekt aufbauen, dass Batches der einzelnen Graphen trainiert werden.
-Scaler überprüfen. (sind alle Features richtig skaliert, welche Features werden überhaupt verwendet)
-Pipeline cleanen.

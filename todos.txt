@@ -1,0 +1,34 @@
+To-Dos:
+
+1️⃣ Trainer umbauen für DataLoader
+- Trainer.fit(): Eingabe train_loader, val_loader statt train_data, val_data.
+- In jeder Epoche über for batch in train_loader: iterieren.
+- Validation analog (with torch.no_grad(): for batch in val_loader:).
+- Durchschnittlichen Loss pro Epoche berechnen und loggen.
+- Early-Stopping und ggf. Checkpointing beibehalten.
+
+2️⃣ Feature-Engineering verbessern
+- In GlobalScaler.fit() prüfen, welche numerischen Features aktuell genutzt werden.
+- Zusätzliche Merkmale aufnehmen:
+  * Geometrische Beziehungen (Abstände, Orientierung, Höhe …)
+  * Kategorie- oder Farb-Features (One-Hot kodieren)
+  * Strukturelle Features (Nachbarschaftsgrad, Typenähnlichkeit)
+- Einheitlich skalieren und in prepare_data() übernehmen.
+- Optional: Feature-Statistiken speichern (Mittelwert, Varianz, Range).
+
+3️⃣ Erweiterte Auswertung aufbauen
+- Lernkurven: Loss + ROC-AUC über Epochen (Matplotlib/TensorBoard).
+- Fehleranalyse: Confusion-Matrix pro Modell, False-Positives / Negatives visualisieren.
+- Feature-Bedeutung: Korrelation / Sensitivität der Features.
+- Embeddings: model.encode()-Ausgaben mit TSNE/UMAP projizieren.
+- Logging: Ergebnisse pro Modell in CSV schreiben.
+
+4️⃣ Nächste Schritte danach
+- Trainer.save() / Trainer.load() hinzufügen.
+- Mehrere GNN-Modelle (GCN, GAT, GraphSAGE) vergleichbar machen.
+- Optional: Automatisches Reporting oder Visual-Dashboard.
+
+Empfohlene Reihenfolge morgen:
+1. Trainer auf DataLoader umstellen.
+2. Neue Features in GlobalScaler aufnehmen.
+3. Evaluations- und Analyse-Funktionen einbauen.
