@@ -2,7 +2,7 @@ import pandas as pd
 import os
 import re
 import time
-from config import CONFIG
+from configs.paths import CONFIG
 import requests
 
 raw_data_path = CONFIG["paths"]["raw_data"]

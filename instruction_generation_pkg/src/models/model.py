@@ -59,7 +59,7 @@ class GCN(torch.nn.Module):
         return self.encode(data.x, data.edge_index)
 
 
-class Trainer:
+class TrainerOld:
     """
     A training utility class for link prediction models in PyTorch Geometric.
 

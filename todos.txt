@@ -1,34 +1,58 @@
 To-Dos:
 
-1️⃣ Trainer umbauen für DataLoader
-- Trainer.fit(): Eingabe train_loader, val_loader statt train_data, val_data.
-- In jeder Epoche über for batch in train_loader: iterieren.
-- Validation analog (with torch.no_grad(): for batch in val_loader:).
-- Durchschnittlichen Loss pro Epoche berechnen und loggen.
-- Early-Stopping und ggf. Checkpointing beibehalten.
+1️⃣ Trainer & Training-Stabilität verbessern
+- Trainer arbeitet bereits mit DataLoader — jetzt Fokus auf Stabilität:
+  * Early-Stopping und Checkpointing implementieren (bestes Modell speichern).
+  * Learning-Rate-Scheduler (ReduceLROnPlateau) einbauen.
+  * Gradient Clipping hinzufügen (clip_grad_norm_).
+  * Training reproducible machen (Seeds fixieren).
+  * Loss-Glättung / Rolling-Average für History implementieren.
+- Mehrere Trainingsläufe durchführen (verschiedene Seeds) → Varianz analysieren.
+- Optional: Stability Index S = 1 - σ_AUC / μ_AUC berechnen.
 
-2️⃣ Feature-Engineering verbessern
+2️⃣ Feature-Engineering erweitern
 - In GlobalScaler.fit() prüfen, welche numerischen Features aktuell genutzt werden.
 - Zusätzliche Merkmale aufnehmen:
-  * Geometrische Beziehungen (Abstände, Orientierung, Höhe …)
-  * Kategorie- oder Farb-Features (One-Hot kodieren)
-  * Strukturelle Features (Nachbarschaftsgrad, Typenähnlichkeit)
-- Einheitlich skalieren und in prepare_data() übernehmen.
-- Optional: Feature-Statistiken speichern (Mittelwert, Varianz, Range).
+  * Geometrische Features: Abstände, Orientierung, Höhe, Position.
+  * Kategorische Merkmale: Farbe, Typ-ID (One-Hot-Encoding oder Embedding).
+  * Strukturelle Features: Nachbarschaftsgrad, Ähnlichkeit, Teilgröße.
+- Einheitlich skalieren (prepare_data() anpassen).
+- Feature-Statistiken speichern (Mittelwert, Varianz, Range) für Diagnose.
+- Optional: Feature-Korrelationen prüfen (Redundanz vermeiden).
 
-3️⃣ Erweiterte Auswertung aufbauen
-- Lernkurven: Loss + ROC-AUC über Epochen (Matplotlib/TensorBoard).
-- Fehleranalyse: Confusion-Matrix pro Modell, False-Positives / Negatives visualisieren.
-- Feature-Bedeutung: Korrelation / Sensitivität der Features.
-- Embeddings: model.encode()-Ausgaben mit TSNE/UMAP projizieren.
-- Logging: Ergebnisse pro Modell in CSV schreiben.
+3️⃣ Erweiterte Auswertung & Analyse
+- Lernkurven: Training/Validation Loss + ROC-AUC über Epochen (Matplotlib/TensorBoard).
+- Fehleranalyse:
+  * Confusion-Matrix pro Modell.
+  * False Positives / False Negatives untersuchen.
+  * Score-Verteilungen (Histogramme, Threshold-Analyse).
+- Feature-Bedeutung:
+  * Korrelation / Sensitivität einzelner Features mit Predictions.
+- Embeddings analysieren:
+  * model.encode()-Ausgaben mit TSNE oder UMAP visualisieren.
+- Logging:
+  * Ergebnisse und Metriken in CSV-Dateien pro Modell speichern.
 
-4️⃣ Nächste Schritte danach
-- Trainer.save() / Trainer.load() hinzufügen.
-- Mehrere GNN-Modelle (GCN, GAT, GraphSAGE) vergleichbar machen.
-- Optional: Automatisches Reporting oder Visual-Dashboard.
+4️⃣ Vorbereitung auf iterativen Graph-Aufbau
+- GraphConstructor entwerfen:
+  * Iteratives Hinzufügen von Kanten (Greedy oder Top-k).
+  * Verwaltung des aktuellen Graphzustands.
+  * Abbruchkriterien kombinieren:
+    - Alle Teile mindestens eine Kante.
+    - Graph ist zusammenhängend.
+    - Durchschnittlicher Knotengrad über Schwelle.
+    - Keine Kante über Score-Schwellenwert.
+- _forward_scores() aus Trainer als Scoring-Engine nutzen.
+- Evaluator-Klasse einbauen (Graphvergleich mit Ground Truth).
 
-Empfohlene Reihenfolge morgen:
-1. Trainer auf DataLoader umstellen.
-2. Neue Features in GlobalScaler aufnehmen.
-3. Evaluations- und Analyse-Funktionen einbauen.
+5️⃣ Nächste Schritte danach
+- Trainer.save() / Trainer.load() hinzufügen (Modell speichern/laden).
+- Mehrere GNN-Modelle (GCN, GAT, GraphSAGE, GIN) integrieren → Vergleichsstudie.
+- Optional: Automatisches Reporting oder Dashboard (Matplotlib/TensorBoard/Streamlit).
+- Später: Reinforcement- oder generatives Modell für den Aufbauprozess untersuchen.
+
+Empfohlene Reihenfolge:
+1. Trainingsstabilität erhöhen (Early-Stopping, Clipping, Scheduler).
+2. Feature-Engineering erweitern (mehr Informationen für robustere Scores).
+3. Evaluation & Analyse verbessern (Metriken, Lernkurven, Fehleranalyse).
+4. GraphConstructor-Design starten (iterativer Aufbau & Abbruchlogik).

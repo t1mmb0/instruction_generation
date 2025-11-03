@@ -11,16 +11,17 @@ import torch
 from torch_geometric.loader import DataLoader
 import torch_geometric.transforms as T
 from sklearn.preprocessing import StandardScaler
-
-from model import GCN, Trainer
-from graph import Graph
-from data_utils import GraphDataBuilder, GlobalScaler
+from src.models.model import GCN
+from src.training.trainer import Trainer
+from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler
+from configs import paths
+import os
 
 # -----------------------------
 # 1. Parameters
 # -----------------------------
 model_ids = ("20006-1", "20009-1")
-
+plots_path = paths.CONFIG["paths"]["plots"]
 splitter = T.RandomLinkSplit(
     num_val=0.1,
     num_test=0.1,
@@ -79,39 +80,22 @@ print("  -> Model built successfully.")
 # 6. Training
 # -----------------------------
 print("\n[4] Training Model ...")
-trainer = Trainer(model=model, optimizer=optimizer, criterion=criterion, patience=30)
+trainer = Trainer(model=model, optimizer=optimizer, criterion=criterion, device=device)
 
-for i, (train_data, val_data) in enumerate(zip(builder.train, builder.val)):
-    print(f"\n--- Training on model {builder.model_ids[i]} ---")
-    train_data, val_data = train_data.to(device), val_data.to(device)
-    best_val_loss = trainer.fit(train_data, val_data, max_epochs=300)
-    print(f"  -> Best Validation Loss: {best_val_loss:.4f}")
+trainer.fit(train_loader=train_loader, val_loader=val_loader, max_epochs=50)
+
+trainer.evaluate_model(test_loader = test_loader)
 
 # -----------------------------
 # 7. Evaluation
 # -----------------------------
-print("\n[5] Evaluating Model on Test Set ...")
 
-for i, test_data in enumerate(builder.test):
-    print(f"\n--- Evaluating model {builder.model_ids[i]} ---")
-    test_data = test_data.to(device)
-    metrics = trainer.evaluate(test_data, k_list=[1, 3, 10, 50])
+import matplotlib.pyplot as plt
 
-    print(
-        "\nEvaluation Results"
-        "\n------------------"
-        f"\nROC-AUC:           {metrics['roc_auc']:.4f}"
-    )
-
-    confusion_matrix_metrics = trainer.analyze_predictions(test_data, threshold=0.6)
-    print("\n[ Confusion Matrix Metrics ]")
-    print("──────────────────────────────────────────────")
-    print(f"  True Positives (TP): {confusion_matrix_metrics['TP']:>6}")
-    print(f"  False Positives (FP): {confusion_matrix_metrics['FP']:>6}")
-    print(f"  False Negatives (FN): {confusion_matrix_metrics['FN']:>6}")
-    print(f"  True Negatives (TN): {confusion_matrix_metrics['TN']:>6}")
-    print("──────────────────────────────────────────────")
-    print(f"  Precision: {confusion_matrix_metrics['precision']*100:6.2f}%")
-    print(f"  Recall:    {confusion_matrix_metrics['recall']*100:6.2f}%")
-    print(f"  F1 Score:  {confusion_matrix_metrics['f1']*100:6.2f}%")
-    print("──────────────────────────────────────────────")
+plt.plot(trainer.history["train"], label="Train Loss")
+plt.plot(trainer.history["val"], label="Val Loss")
+plt.xlabel("Epoch")
+plt.ylabel("Loss")
+plt.legend()
+plt.savefig(os.path.join(plots_path, f"loss_curve.png"), dpi=300, bbox_inches="tight")
+print("plot saved successfully!")

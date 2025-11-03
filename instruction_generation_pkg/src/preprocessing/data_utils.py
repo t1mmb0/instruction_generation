@@ -7,8 +7,9 @@ import torch
 from torch_geometric.data import Data
 import torch_geometric.transforms as T
 from sklearn.preprocessing import StandardScaler
-
-
+from configs.paths import CONFIG
+import os
+path = CONFIG["paths"]["ready"]
 # ------------------------------------------------
 # Step 1: FIT GLOBAL SCALER
 # ------------------------------------------------
@@ -21,7 +22,7 @@ class GlobalScaler():
     def fit(self, model_ids: tuple,):
         data = None
         for model_id in model_ids:
-            parts = pd.read_csv(f"results/df_{model_id}.csv")
+            parts = pd.read_csv(os.path.join(path, f"df_{model_id}.csv"))
             X = parts.select_dtypes(include=("float64", "int64")) # filter non-numerical
             if data is None:
                 data = X
@@ -75,7 +76,7 @@ class GraphDataBuilder():
         self.test = list()
 
     def _build_edge_index(self, model_id):
-        edges_df = pd.read_csv(f"results/gt_{model_id}.csv")
+        edges_df = pd.read_csv(os.path.join(path, f"gt_{model_id}.csv"))
         pos_edge_pairs = edges_df.query("connected == 1")[["part_id_1", "part_id_2"]]
         edge_index_pos = torch.tensor(pos_edge_pairs.values.T, dtype=torch.long)
         edge_index_undir = torch.cat([edge_index_pos, edge_index_pos.flip(0)], dim=1)
@@ -109,7 +110,7 @@ class GraphDataBuilder():
 # Helping Functions
 # ------------------------------------------------
 def prepare_data(model_id, ref_columns):
-    data = pd.read_csv(f"results/df_{model_id}.csv")
+    data = pd.read_csv(os.path.join(path, f"df_{model_id}.csv"))
     data = data.select_dtypes(include=["float64","int64"])
     data = data.reindex(columns=ref_columns, fill_value=0.0)
     return data
