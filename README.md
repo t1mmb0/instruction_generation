@@ -160,7 +160,7 @@ pip install -r requirements.txt
 
 ### Zusätzliche Schritte
 - API-Key von [Rebrickable.com](https://rebrickable.com/api) anlegen  
-- Daten in `results/` ablegen (`df_*.csv`, `gt_*.csv`)  
+- Daten in `data/ready` ablegen (`df_*.csv`, `gt_*.csv`)  
 
 ---
 
