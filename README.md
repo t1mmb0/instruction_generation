@@ -156,6 +156,7 @@ Das trainierte Link-Prediction-Modell dient als **Score-Engine** zur Graphkonstr
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 pip install torch-geometric
 pip install -r requirements.txt
+pip install -e .
 ```
 
 ### Zusätzliche Schritte
