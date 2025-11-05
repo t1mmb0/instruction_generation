@@ -175,3 +175,7 @@ test.py
 
 #API KEY
 API_KEY.txt
+
+#Plots
+
+results/
