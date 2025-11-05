@@ -84,7 +84,7 @@ print("  -> Model built successfully.")
 print("\n[4] Training Model ...")
 trainer = Trainer(model=model, optimizer=optimizer, criterion=criterion, device=device)
 
-trainer.fit(train_loader=train_loader, val_loader=val_loader, max_epochs=50)
+trainer.fit(train_loader=train_loader, val_loader=val_loader, max_epochs=200, min_delta=0, patience=20)
 
 trainer.evaluate_model(test_loader = test_loader)
 

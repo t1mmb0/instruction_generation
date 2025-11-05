@@ -14,14 +14,30 @@ class Trainer:
         self.criterion = criterion
         self.device = device
         self.history = {"train": [], "val": []}
-        
+        self.min_val_loss = float("inf")
+        self._counter = 0
 
-    def fit(self,train_loader, val_loader, max_epochs,):
+    def early_stopping(self, patience, min_delta, val_loss):
+        if val_loss < self.min_val_loss:
+            self.min_val_loss = val_loss
+            self._counter = 0
+        elif val_loss > (self.min_val_loss + min_delta):
+            self._counter += 1
+            if self._counter == patience:           
+                return True
+        return False
+        
+    def fit(self,train_loader, val_loader, max_epochs, patience, min_delta):
+         
          for epoch in range(1, max_epochs+1): 
              loss = self._train_step(train_loader)
              val_loss = self._eval_step(val_loader)
              self.history["train"].append(loss)
              self.history["val"].append(val_loss)
+
+             if self.early_stopping(patience, min_delta, val_loss):
+                 print(f"Training stopped in Epoch {epoch}, (patience reached)")
+                 break
 
              print(f"[Epoch {epoch:03d}] Train: {loss:.4f}, Val: {val_loss:.4f}")
 
