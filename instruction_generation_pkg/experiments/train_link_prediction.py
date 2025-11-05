@@ -14,12 +14,14 @@ from sklearn.preprocessing import StandardScaler
 from src.models.model import GCN
 from src.training.trainer import Trainer
 from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler
+from src.utils.general_utils import set_seed
 from configs import paths
 import os
-
 # -----------------------------
 # 1. Parameters
 # -----------------------------
+
+set_seed(42)
 model_ids = ("20006-1", "20009-1")
 plots_path = paths.CONFIG["paths"]["plots"]
 splitter = T.RandomLinkSplit(

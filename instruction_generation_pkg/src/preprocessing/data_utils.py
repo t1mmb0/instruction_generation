@@ -9,6 +9,7 @@ import torch_geometric.transforms as T
 from sklearn.preprocessing import StandardScaler
 from configs.paths import CONFIG
 import os
+
 path = CONFIG["paths"]["ready"]
 # ------------------------------------------------
 # Step 1: FIT GLOBAL SCALER
@@ -114,6 +115,7 @@ def prepare_data(model_id, ref_columns):
     data = data.select_dtypes(include=["float64","int64"])
     data = data.reindex(columns=ref_columns, fill_value=0.0)
     return data
+
 
 # ------------------------------------------------
 # Step X: Functionality Test
