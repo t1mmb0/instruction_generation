@@ -12,7 +12,7 @@ from torch_geometric.loader import DataLoader
 import torch_geometric.transforms as T
 from sklearn.preprocessing import StandardScaler
 from src.models.model import GCN
-from src.training.trainer import Trainer
+from src.training.trainer import Trainer, Regularizer
 from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler
 from src.utils.general_utils import set_seed
 from configs import paths
@@ -82,9 +82,10 @@ print("  -> Model built successfully.")
 # 6. Training
 # -----------------------------
 print("\n[4] Training Model ...")
-trainer = Trainer(model=model, optimizer=optimizer, criterion=criterion, device=device)
+early_stopping = Regularizer(patience = 30)
+trainer = Trainer(model=model, optimizer=optimizer, criterion=criterion, device=device, Regularizer=early_stopping)
 
-trainer.fit(train_loader=train_loader, val_loader=val_loader, max_epochs=200, min_delta=0, patience=20)
+trainer.fit(train_loader=train_loader, val_loader=val_loader, max_epochs=200)
 
 trainer.evaluate_model(test_loader = test_loader)
 

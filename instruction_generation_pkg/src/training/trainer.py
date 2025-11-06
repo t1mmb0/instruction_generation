@@ -8,7 +8,7 @@ import numpy as np
 
 class Trainer:
 
-    def __init__(self, model, optimizer, criterion, device):
+    def __init__(self, model, optimizer, criterion, device, Regularizer = None):
         self.model = model
         self.optimizer = optimizer
         self.criterion = criterion
@@ -16,18 +16,9 @@ class Trainer:
         self.history = {"train": [], "val": []}
         self.min_val_loss = float("inf")
         self._counter = 0
+        self.Regularizer = Regularizer
 
-    def early_stopping(self, patience, min_delta, val_loss):
-        if val_loss < self.min_val_loss:
-            self.min_val_loss = val_loss
-            self._counter = 0
-        elif val_loss > (self.min_val_loss + min_delta):
-            self._counter += 1
-            if self._counter == patience:           
-                return True
-        return False
-        
-    def fit(self,train_loader, val_loader, max_epochs, patience, min_delta):
+    def fit(self,train_loader, val_loader, max_epochs):
          
          for epoch in range(1, max_epochs+1): 
              loss = self._train_step(train_loader)
@@ -35,7 +26,7 @@ class Trainer:
              self.history["train"].append(loss)
              self.history["val"].append(val_loss)
 
-             if self.early_stopping(patience, min_delta, val_loss):
+             if self.Regularizer and self.Regularizer.check_early_stopping(val_loss):
                  print(f"Training stopped in Epoch {epoch}, (patience reached)")
                  break
 
@@ -104,3 +95,21 @@ class Trainer:
         return np.mean(loss_all)
 
 
+class Regularizer():
+
+    def __init__(self, patience,):
+
+        self.best_loss = float("inf")
+        self.patience = patience
+        self.counter = 0
+
+
+    def check_early_stopping(self, val_loss):
+        if val_loss < self.best_loss:
+            self.best_loss = val_loss
+            self.counter = 0
+        else:
+            self.counter += 1
+            if self.counter >= self.patience:
+                return True
+        return False

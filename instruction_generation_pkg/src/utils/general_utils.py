@@ -17,8 +17,6 @@ def set_seed(seed=42):
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-
-    # Optional (aber empfohlen für deterministisches Verhalten)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
