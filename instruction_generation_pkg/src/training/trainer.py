@@ -14,23 +14,29 @@ class Trainer:
         self.criterion = criterion
         self.device = device
         self.history = {"train": [], "val": []}
-        self.min_val_loss = float("inf")
-        self._counter = 0
         self.Regularizer = Regularizer
 
     def fit(self,train_loader, val_loader, max_epochs):
-         
+         best_state, best_val_loss, best_epoch = None, float("inf"), None
+
+
          for epoch in range(1, max_epochs+1): 
              loss = self._train_step(train_loader)
              val_loss = self._eval_step(val_loader)
              self.history["train"].append(loss)
              self.history["val"].append(val_loss)
 
+             if val_loss < best_val_loss:
+                 best_val_loss = val_loss
+                 best_state = {k: v.cpu().clone() for k, v in self.model.state_dict().items()}
+                 best_epoch = epoch
              if self.Regularizer and self.Regularizer.check_early_stopping(val_loss):
                  print(f"Training stopped in Epoch {epoch}, (patience reached)")
                  break
-
-             print(f"[Epoch {epoch:03d}] Train: {loss:.4f}, Val: {val_loss:.4f}")
+             
+         self.model.load_state_dict(best_state)
+         print("\n[ Training Finished ]")
+         print(f"[Epoch {best_epoch:03d}] , Best_Val: {best_val_loss:.4f}")
 
     def _train_step(self, train_loader,):
         loss_all = list()
@@ -95,6 +101,7 @@ class Trainer:
         return np.mean(loss_all)
 
 
+
 class Regularizer():
 
     def __init__(self, patience,):
@@ -113,3 +120,4 @@ class Regularizer():
             if self.counter >= self.patience:
                 return True
         return False
+    
