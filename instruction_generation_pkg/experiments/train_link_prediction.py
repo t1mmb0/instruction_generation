@@ -12,7 +12,8 @@ from torch_geometric.loader import DataLoader
 import torch_geometric.transforms as T
 from sklearn.preprocessing import StandardScaler
 from src.models.model import GCN
-from src.training.trainer import Trainer, Regularizer
+from src.training.trainer import Trainer
+from src.training.regularizer import Regularizer
 from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler
 from src.utils.general_utils import set_seed
 from configs import paths
