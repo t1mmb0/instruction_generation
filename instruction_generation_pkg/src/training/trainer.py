@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
-import torch.optim.lr_scheduler as lr_scheduler
 from sklearn.metrics import roc_auc_score, average_precision_score
 import pandas as pd
 import numpy as np
@@ -28,15 +27,18 @@ class Trainer:
         scheduler = self._setup_run()
 
         for epoch in range(1, max_epochs+1): 
+            if epoch%5==0:
+                print(f"Training Epoch: {epoch}")
 
             #2 Training + Validation (One Epoch)
             train_loss, val_loss = self._run_one_epoch(train_loader, val_loader)
 
             #3 Update History, Update Best-State, Update Scheduler
             self._after_epoch(epoch, train_loss, val_loss, scheduler)
+            print(self.optimizer.param_groups[0]["lr"])
 
             #4 Check Early Stopping
-            if self._should_stop:
+            if self._should_stop(epoch=epoch, val_loss=val_loss):
                 break
 
         #5 Return and Summarize best Model
@@ -83,7 +85,7 @@ class Trainer:
         self.best_epoch = None
         self.history = {"train": [], "val": []}
         if self.scheduler_builder is not None:            
-            scheduler = self.scheduler_builder(self.optimizer)
+            scheduler = self.scheduler_builder.build(self.optimizer)
         else:
             scheduler = None
 

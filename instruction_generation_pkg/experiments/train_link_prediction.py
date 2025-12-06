@@ -14,6 +14,7 @@ from sklearn.preprocessing import StandardScaler
 from src.models.model import GCN
 from src.training.trainer import Trainer
 from src.training.regularizer import Regularizer
+from src.training.schedulers.base import SchedulerBuilder, SchedulerType
 from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler
 from src.utils.general_utils import set_seed
 from configs import paths
@@ -82,11 +83,16 @@ print("  -> Model built successfully.")
 # -----------------------------
 # 6. Training
 # -----------------------------
+#Parameter:
+max_epochs = 200
+
+
 print("\n[4] Training Model ...")
 early_stopping = Regularizer(patience = 30)
-trainer = Trainer(model=model, optimizer=optimizer, criterion=criterion, device=device, Regularizer=early_stopping)
+LRSchedulerBuilder = SchedulerBuilder(scheduler_type= SchedulerType.COSINE, T_max = max_epochs, eta_min = 0.00001)
+trainer = Trainer(model=model, optimizer=optimizer, criterion=criterion, device=device, Regularizer=early_stopping, LR_Scheduler_Builder= LRSchedulerBuilder)
 
-trainer.fit(train_loader=train_loader, val_loader=val_loader, max_epochs=200)
+trainer.fit(train_loader=train_loader, val_loader=val_loader, max_epochs=max_epochs)
 
 trainer.evaluate_model(test_loader = test_loader)
 

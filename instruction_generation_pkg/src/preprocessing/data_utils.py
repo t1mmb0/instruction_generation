@@ -129,7 +129,7 @@ if __name__ == "__main__":
         num_val=0.1,
         num_test=0.1,
         is_undirected=True,
-        add_negative_train_samples=True,
+        add_negative_train_samples=False,
     )
 
     builder = GraphDataBuilder(global_scaler, splitter, ("20009-1", "20006-1"))
