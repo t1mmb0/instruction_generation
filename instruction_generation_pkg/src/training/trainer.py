@@ -35,7 +35,6 @@ class Trainer:
 
             #3 Update History, Update Best-State, Update Scheduler
             self._after_epoch(epoch, train_loss, val_loss, scheduler)
-            print(self.optimizer.param_groups[0]["lr"])
 
             #4 Check Early Stopping
             if self._should_stop(epoch=epoch, val_loss=val_loss):

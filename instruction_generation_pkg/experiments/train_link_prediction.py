@@ -70,15 +70,16 @@ in_channels = builder.train[0].num_features
 
 model = GCN(
     in_channels=in_channels,
-    hidden_channels=16,
-    out_channels=4,
+    hidden_channels=32,
+    out_channels=32,
 ).to(device)
 
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4,)
 criterion = torch.nn.BCEWithLogitsLoss()
 
 print(model)
 print("  -> Model built successfully.")
+
 
 # -----------------------------
 # 6. Training
