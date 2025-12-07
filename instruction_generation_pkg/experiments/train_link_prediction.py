@@ -17,15 +17,13 @@ from src.training.regularizer import Regularizer
 from src.training.schedulers.base import SchedulerBuilder, SchedulerType
 from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler
 from src.utils.general_utils import set_seed
-from configs import paths
-import os
+from src.utils.visualize_results import Visualizer
 # -----------------------------
 # 1. Parameters
 # -----------------------------
 
 set_seed(42)
 model_ids = ("20006-1", "20009-1")
-plots_path = paths.CONFIG["paths"]["plots"]
 splitter = T.RandomLinkSplit(
     num_val=0.1,
     num_test=0.1,
@@ -101,12 +99,7 @@ trainer.evaluate_model(test_loader = test_loader)
 # 7. Evaluation
 # -----------------------------
 
-import matplotlib.pyplot as plt
+visualizer = Visualizer(history_train=trainer.history["train"], history_val=trainer.history["val"], smoothing_window= 3)
+visualizer.plot_loss()
 
-plt.plot(trainer.history["train"], label="Train Loss")
-plt.plot(trainer.history["val"], label="Val Loss")
-plt.xlabel("Epoch")
-plt.ylabel("Loss")
-plt.legend()
-plt.savefig(os.path.join(plots_path, f"loss_curve.png"), dpi=300, bbox_inches="tight")
-print("plot saved successfully!")
+
