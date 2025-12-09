@@ -80,7 +80,8 @@ class Trainer:
         return False
     
     def _setup_run(self, ):
-
+        if self.Regularizer:
+            self.Regularizer.reset()
         self.best_state = None
         self.best_val_loss = float("inf")
         self.best_epoch = None

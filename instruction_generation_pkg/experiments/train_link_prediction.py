@@ -15,14 +15,15 @@ from src.models.model import GCN
 from src.training.trainer import Trainer
 from src.training.regularizer import Regularizer
 from src.training.schedulers.base import SchedulerBuilder, SchedulerType
-from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler
-
+from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler, seed_worker
+from src.utils.general_utils import set_seed
 from src.utils.visualize_results import Visualizer
 from experiments.experiment_runner import ExperimentRunner
 # -----------------------------
 # 1. Parameters
 # -----------------------------
 
+set_seed(42)
 
 model_ids = ("20006-1", "20009-1")
 splitter = T.RandomLinkSplit(
@@ -53,9 +54,9 @@ print(f"  -> {len(builder.test)} test graphs")
 # -----------------------------
 # 4. Create DataLoaders
 # -----------------------------
-train_loader = DataLoader(builder.train, batch_size=2, shuffle=True)
-val_loader = DataLoader(builder.val, batch_size=2, shuffle=False)
-test_loader = DataLoader(builder.test, batch_size=2, shuffle=False)
+train_loader = DataLoader(builder.train, batch_size=2, shuffle=True,)
+val_loader = DataLoader(builder.val, batch_size=2, shuffle=False,)
+test_loader = DataLoader(builder.test, batch_size=2, shuffle=False,)
 
 # -----------------------------
 # 5. Build Model
@@ -69,8 +70,8 @@ in_channels = builder.train[0].num_features
 
 model = GCN(
     in_channels=in_channels,
-    hidden_channels=32,
-    out_channels=32,
+    hidden_channels=128,
+    out_channels=64,
 ).to(device)
 
 optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4,)
