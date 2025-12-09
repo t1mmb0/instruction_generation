@@ -16,6 +16,7 @@ class Trainer:
         self.criterion = criterion
         self.device = device
         self.history = {"train": [], "val": []}
+        self.metrics = {"roc-auc":None, "ave-prec":None}
         self.Regularizer = Regularizer
         self.best_state = None
         self.best_val_loss = float("inf")
@@ -52,7 +53,8 @@ class Trainer:
 
         roc_auc = roc_auc_score(y_true = y, y_score= scores)
         ave_prec = average_precision_score(y_true=y, y_score=scores)
-
+        self.metrics["roc-auc"] = roc_auc
+        self.metrics["ave-prec"] = ave_prec
         print(f"[ROC-AUC: {roc_auc:.3f}] [AVE-PREC: {ave_prec:.3f}]")
 
     def _run_one_epoch(self, train_loader, val_loader):
@@ -142,4 +144,5 @@ class Trainer:
             loss_all.append(loss.item())
         return np.mean(loss_all)
     
-    
+    def _return_history(self,):
+        return self.history, self.metrics["roc-auc"], self.metrics["ave-prec"]

@@ -16,13 +16,14 @@ from src.training.trainer import Trainer
 from src.training.regularizer import Regularizer
 from src.training.schedulers.base import SchedulerBuilder, SchedulerType
 from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler
-from src.utils.general_utils import set_seed
+
 from src.utils.visualize_results import Visualizer
+from experiments.experiment_runner import ExperimentRunner
 # -----------------------------
 # 1. Parameters
 # -----------------------------
 
-set_seed(42)
+
 model_ids = ("20006-1", "20009-1")
 splitter = T.RandomLinkSplit(
     num_val=0.1,
@@ -84,22 +85,33 @@ print("  -> Model built successfully.")
 # -----------------------------
 #Parameter:
 max_epochs = 200
-
+seeds= [1,2,3,4]
 
 print("\n[4] Training Model ...")
 early_stopping = Regularizer(patience = 30)
 LRSchedulerBuilder = SchedulerBuilder(scheduler_type= SchedulerType.COSINE, T_max = max_epochs, eta_min = 0.00001)
-trainer = Trainer(model=model, optimizer=optimizer, criterion=criterion, device=device, Regularizer=early_stopping, LR_Scheduler_Builder= LRSchedulerBuilder)
 
-trainer.fit(train_loader=train_loader, val_loader=val_loader, max_epochs=max_epochs)
+runner = ExperimentRunner(trainer=Trainer, 
+                          seeds = seeds, 
+                          max_epochs=max_epochs,
+                          train_loader = train_loader, 
+                          val_loader = val_loader, 
+                          model=model, 
+                          optimizer=optimizer, 
+                          criterion=criterion, 
+                          device=device, 
+                          Regularizer=early_stopping, 
+                          LR_Scheduler_Builder= LRSchedulerBuilder
+                          )
 
-trainer.evaluate_model(test_loader = test_loader)
+history = runner.run()
+#runner.trainer.evaluate_model(test_loader = test_loader)
 
 # -----------------------------
 # 7. Evaluation
 # -----------------------------
-
-visualizer = Visualizer(history_train=trainer.history["train"], history_val=trainer.history["val"], smoothing_window= 3)
-visualizer.plot_loss()
+print(history)
+#visualizer = Visualizer(history_train=trainer.history["train"], history_val=trainer.history["val"], smoothing_window= 3)
+#visualizer.plot_loss()
 
 
