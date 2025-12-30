@@ -15,7 +15,7 @@ from src.models.model import GCN
 from src.training.trainer import Trainer
 from src.training.regularizer import Regularizer
 from src.training.schedulers.base import SchedulerBuilder, SchedulerType
-from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler, seed_worker
+from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler
 from src.utils.general_utils import set_seed
 from src.utils.visualize_results import Visualizer
 from experiments.experiment_runner import ExperimentRunner
@@ -105,14 +105,32 @@ runner = ExperimentRunner(trainer=Trainer,
                           LR_Scheduler_Builder= LRSchedulerBuilder
                           )
 
-history = runner.run()
-#runner.trainer.evaluate_model(test_loader = test_loader)
+results = runner.run()
+
+
 
 # -----------------------------
 # 7. Evaluation
 # -----------------------------
-print(history)
-#visualizer = Visualizer(history_train=trainer.history["train"], history_val=trainer.history["val"], smoothing_window= 3)
-#visualizer.plot_loss()
+seed = runner.seeds[0]
+trainer = results[seed]["trainer"]
 
+from src.training.analysis.feature_importance import FeatureImportanceAnalyzer
+
+feature_names = ["part_id","color","x","y","z","a","b","c","d","e","f","g","h","i","part","part_cat_id","year_from","year_to","dim1","dim2","dim3"]
+
+analyzer = FeatureImportanceAnalyzer(
+    model=trainer.model,
+    data_loader=val_loader,
+    feature_names=feature_names,  
+    device=device,
+    criterion=criterion
+)
+
+df_imp = analyzer.compute_importance()
+dead = analyzer.find_dead_features(df_imp, threshold=1e-4)
+
+print(df_imp.head(10))
+print("Dead features:")
+print(dead)
 
