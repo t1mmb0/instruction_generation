@@ -17,11 +17,12 @@ from src.training.schedulers.base import SchedulerBuilder, SchedulerType
 from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler
 from src.utils.general_utils import set_seed
 from src.utils.visualize_results import Visualizer
-from experiments.experiment_runner import ExperimentRunner
+from src.runners  import run_config, experiment_runner, component_factory, single_run
 
 # -----------------------------
 # 1. Parameters
 # -----------------------------
+set_seed(42)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model_ids = ("20006-1", "20009-1")
@@ -58,7 +59,7 @@ val_loader = DataLoader(builder.val, batch_size=2, shuffle=False,)
 test_loader = DataLoader(builder.test, batch_size=2, shuffle=False,)
 
 # -----------------------------
-# 5. Setup Experiment Runner
+# 5. Setup Parameters
 # -----------------------------
 print("\n[3] Setup Experiment Runner...")
 
@@ -71,7 +72,7 @@ out_channels = 64
 lr = 0.005
 weight_decay = 5e-4
 #LR Parameter
-type = SchedulerType.COSINE
+Stype = SchedulerType.COSINE
 eta_min = 0.00001
 
 # Further Parameters
@@ -97,50 +98,48 @@ def regularizer_builder():
     return Regularizer(patience = patience)
 
 def lrScheduler_builder():
-    return SchedulerBuilder(scheduler_type=type, T_max = max_epochs, eta_min = eta_min)
+    return SchedulerBuilder(scheduler_type=Stype, T_max = max_epochs, eta_min = eta_min)
 
-runner = ExperimentRunner(trainer=Trainer, 
-                          seeds = seeds, 
-                          max_epochs=max_epochs,
-                          train_loader = train_loader, 
-                          val_loader = val_loader,
-                          test_loader = test_loader,
-                          criterion=criterion, 
-                          device=device,  
-                          model_builder=model_builder, 
-                          optimizer_builder=optimizer_builder, 
-                          regularizer_builder = regularizer_builder, 
-                          lrScheduler_builder= lrScheduler_builder
-                          )
+
 
 # -----------------------------
-# 6. Training
+# 6. Setup Runner
 # -----------------------------
 
-results = runner.run()
-
-# -----------------------------
-# 7. Evaluation
-# -----------------------------
-seed = runner.seeds[0]
-trainer = results[seed]["trainer"]
-
-from src.training.analysis.feature_importance import FeatureImportanceAnalyzer
-
-feature_names = ["part_id","color","x","y","z","a","b","c","d","e","f","g","h","i","part","part_cat_id","year_from","year_to","dim1","dim2","dim3"]
-
-analyzer = FeatureImportanceAnalyzer(
-    model=trainer.model,
-    data_loader=val_loader,
-    feature_names=feature_names,  
-    device=device,
-    criterion=criterion
+config = run_config.RunConfig(
+    seeds=seeds,
+    max_epochs=max_epochs,
+    compute_feature_importance=False,
+    feature_names=None,
 )
 
-df_imp = analyzer.compute_importance()
-dead = analyzer.find_dead_features(df_imp, threshold=1e-4)
+factory = component_factory.ComponentFactory(
+    model_builder = model_builder,
+    optimizer_builder = optimizer_builder,
+    regularizer_builder = regularizer_builder,
+    lr_scheduler_builder=lrScheduler_builder,
+)
 
-print(df_imp.head(10))
-print("Dead features:")
-print(dead)
+executor = single_run.SingleRunExecutor(
+    trainer_cls=Trainer,
+    factory=factory,
+    train_loader=train_loader,
+    val_loader=val_loader,
+    test_loader=test_loader,
+    device=device,
+    max_epochs = max_epochs,
+    criterion=criterion,
+)
 
+# -----------------------------
+# 7. Experiment
+# -----------------------------
+
+
+runner = experiment_runner.ExperimentRunner(
+    executor = executor,
+    config = config,
+)
+
+results = runner.run()
+print("Finished!")
