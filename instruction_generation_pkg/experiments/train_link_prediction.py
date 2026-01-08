@@ -10,7 +10,6 @@ import numpy as np
 import torch
 from torch_geometric.loader import DataLoader
 import torch_geometric.transforms as T
-from sklearn.preprocessing import StandardScaler
 from src.models.model import GCN
 from src.training.trainer import Trainer
 from src.training.regularizer import Regularizer
@@ -19,11 +18,11 @@ from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler
 from src.utils.general_utils import set_seed
 from src.utils.visualize_results import Visualizer
 from experiments.experiment_runner import ExperimentRunner
+
 # -----------------------------
 # 1. Parameters
 # -----------------------------
-
-set_seed(42)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 model_ids = ("20006-1", "20009-1")
 splitter = T.RandomLinkSplit(
@@ -59,55 +58,66 @@ val_loader = DataLoader(builder.val, batch_size=2, shuffle=False,)
 test_loader = DataLoader(builder.test, batch_size=2, shuffle=False,)
 
 # -----------------------------
-# 5. Build Model
+# 5. Setup Experiment Runner
 # -----------------------------
-print("\n[3] Building Model ...")
+print("\n[3] Setup Experiment Runner...")
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# Use first graph to determine feature dimensions
+# Model Parameters
 in_channels = builder.train[0].num_features
+hidden_channels = 128
+out_channels = 64
 
-model = GCN(
-    in_channels=in_channels,
-    hidden_channels=128,
-    out_channels=64,
-).to(device)
+# Optimizer Parameters
+lr = 0.005
+weight_decay = 5e-4
+#LR Parameter
+type = SchedulerType.COSINE
+eta_min = 0.00001
 
-optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4,)
+# Further Parameters
 criterion = torch.nn.BCEWithLogitsLoss()
-
-print(model)
-print("  -> Model built successfully.")
-
-
-# -----------------------------
-# 6. Training
-# -----------------------------
-#Parameter:
+patience = 30
 max_epochs = 200
 seeds= [1,2,3,4]
 
-print("\n[4] Training Model ...")
-early_stopping = Regularizer(patience = 30)
-LRSchedulerBuilder = SchedulerBuilder(scheduler_type= SchedulerType.COSINE, T_max = max_epochs, eta_min = 0.00001)
+
+
+# Builder
+def model_builder():
+    return GCN(
+        in_channels=in_channels,
+        hidden_channels=hidden_channels,
+        out_channels=out_channels,
+    ).to(device)
+
+def optimizer_builder(model):
+    return torch.optim.Adam(model.parameters(), lr=lr, weight_decay = weight_decay)
+
+def regularizer_builder():
+    return Regularizer(patience = patience)
+
+def lrScheduler_builder():
+    return SchedulerBuilder(scheduler_type=type, T_max = max_epochs, eta_min = eta_min)
 
 runner = ExperimentRunner(trainer=Trainer, 
                           seeds = seeds, 
                           max_epochs=max_epochs,
                           train_loader = train_loader, 
-                          val_loader = val_loader, 
-                          model=model, 
-                          optimizer=optimizer, 
+                          val_loader = val_loader,
+                          test_loader = test_loader,
                           criterion=criterion, 
-                          device=device, 
-                          Regularizer=early_stopping, 
-                          LR_Scheduler_Builder= LRSchedulerBuilder
+                          device=device,  
+                          model_builder=model_builder, 
+                          optimizer_builder=optimizer_builder, 
+                          regularizer_builder = regularizer_builder, 
+                          lrScheduler_builder= lrScheduler_builder
                           )
 
+# -----------------------------
+# 6. Training
+# -----------------------------
+
 results = runner.run()
-
-
 
 # -----------------------------
 # 7. Evaluation

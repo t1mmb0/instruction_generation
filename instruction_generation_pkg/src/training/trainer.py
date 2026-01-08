@@ -28,8 +28,6 @@ class Trainer:
         scheduler = self._setup_run()
 
         for epoch in range(1, max_epochs+1): 
-            if epoch%5==0:
-                print(f"Training Epoch: {epoch}")
 
             #2 Training + Validation (One Epoch)
             train_loss, val_loss = self._run_one_epoch(train_loader, val_loader)
@@ -75,7 +73,8 @@ class Trainer:
 
     def _should_stop(self, epoch, val_loss):
         if self.Regularizer and self.Regularizer.check_early_stopping(val_loss):
-            print(f"Training stopped in Epoch {epoch}, (patience reached)")
+            print("Early stopping triggered")
+            print(f"Stopped at Epoch : {epoch}")
             return True
         return False
     
