@@ -14,7 +14,8 @@ from src.models.model import GCN
 from src.training.trainer import Trainer
 from src.training.regularizer import Regularizer
 from src.training.schedulers.base import SchedulerBuilder, SchedulerType
-from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler
+from src.preprocessing.data_utils import GlobalScaler
+from src.data.build_graph import GraphDataBuilder
 from src.utils.general_utils import set_seed
 from src.utils.visualize_results import Visualizer
 from src.runners  import run_config, experiment_runner, component_factory, single_run
