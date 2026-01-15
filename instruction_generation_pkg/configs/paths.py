@@ -9,9 +9,11 @@ ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 CONFIG = {
     "paths": {
         # Input-Daten
-        "raw_data": os.path.join(ROOT_DIR, "data", "raw"),
-        "processed": os.path.join(ROOT_DIR, "data", "processed"),
-        "ready": os.path.join(ROOT_DIR, "data", "ready"),
+        "raw": os.path.join(ROOT_DIR, "data", "01_raw"),
+        "ready": os.path.join(ROOT_DIR, "data", "02_ready"),
+        "features": os.path.join(ROOT_DIR, "data", "03_features"),
+        "gt": os.path.join(ROOT_DIR, "data", "ground_truth"),
+        "part_categories": os.path.join(ROOT_DIR, "data", "part_categories.csv"),
 
         # Ergebnisse und Modelle
         "results": os.path.join(ROOT_DIR, "results"),

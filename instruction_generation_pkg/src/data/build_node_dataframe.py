@@ -5,8 +5,8 @@ import time
 from configs.paths import CONFIG
 import requests
 
-raw_data_path = CONFIG["paths"]["raw_data"]
-processed_data_path = CONFIG["paths"]["processsed"]
+raw_data_path = CONFIG["paths"]["raw"]
+processed_data_path = CONFIG["paths"]["ready"]
 
 with open("API_KEY.txt", "r") as f:
     API_KEY = f.read().strip()
@@ -80,8 +80,10 @@ def extract_bracket_info(name):
     return bracket_text
 
 
-folder = "./data/raw"
-files = [f for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f))]
+
+files = [f for f in os.listdir(raw_data_path)
+         if f.lower().endswith((".ldr", ".mpd"))]
+
 
 
 for lego_model in files:
@@ -96,8 +98,8 @@ for lego_model in files:
     results = []
 
     for counter, part_num in enumerate(parts):
-        PART_NUM = part_num
-        url = f"https://rebrickable.com/api/v3/lego/parts/{PART_NUM}/"
+        part_num
+        url = f"https://rebrickable.com/api/v3/lego/parts/{part_num}/"
         headers = {"Authorization": f"key {API_KEY}"}
 
         while True:
@@ -128,14 +130,16 @@ for lego_model in files:
 
 
     raw_parts_df = pd.concat(results)
-    part_category_df = pd.read_csv("./data/part_categories.csv")
+    part_category_df = pd.read_csv(CONFIG["paths"]["part_categories"])
     parts_df = raw_parts_df.merge(part_category_df, left_on="part_cat_id", right_on="id", how="left")
     parts_df = parts_df.rename(columns={"name_x": "part_name", "name_y": "category_name"})
     parts_df = parts_df.drop(columns=["id", "part_count"])
     parts_df[["dim1", "dim2", "dim3"]] = parts_df["part_name"].apply(lambda x: pd.Series(extract_dimensions(x)))
     parts_df["bracket_info"] = parts_df["part_name"].apply(lambda x: pd.Series(extract_bracket_info(x)))
+    data_parts = parts_df[["part_num","part_name","part_cat_id","year_from", "year_to", "category_name", "dim1", "dim2", "dim3", "bracket_info"]]
+    df = model_dataframe.join(data_parts.set_index('part_num'), on='part')
+    df = df.reset_index().rename(columns={"index": "part_id"})
 
     base_name = os.path.splitext(lego_model)[0]
-    parts_df.to_csv(os.path.join(processed_data_path, f"{base_name}_parts.csv"), index=False)
-    model_dataframe.to_csv(os.path.join(processed_data_path, f"{base_name}_model.csv"), index=False)
+    df.to_csv(os.path.join(processed_data_path, f"{base_name}.csv"), index=False)
     print(f"Model {base_name} finished!")
