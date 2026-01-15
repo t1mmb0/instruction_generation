@@ -18,6 +18,7 @@ from src.preprocessing.data_utils import GraphDataBuilder, GlobalScaler
 from src.utils.general_utils import set_seed
 from src.utils.visualize_results import Visualizer
 from src.runners  import run_config, experiment_runner, component_factory, single_run
+from configs import paths
 
 # -----------------------------
 # 1. Parameters
@@ -143,3 +144,25 @@ runner = experiment_runner.ExperimentRunner(
 
 results = runner.run()
 print("Finished!")
+
+# -----------------------------
+# 7. Visualizer
+# -----------------------------
+train_history = results[1]["history"]["train"]
+val_history = results[1]["history"]["val"]
+
+visualizer = Visualizer(history_train=train_history, history_val=val_history)
+visualizer.plot_loss()
+metrics = {"roc_auc" : list(), 
+           "ave_prec" : list()}
+
+
+for seed, run in results.items():
+    metrics["roc_auc"].append(run["metrics"]["roc_auc"])
+    metrics["ave_prec"].append(run["metrics"]["average_precision"])
+
+
+df = pd.DataFrame(metrics)
+print(df.head())
+print(df.mean())
+print(df.std())

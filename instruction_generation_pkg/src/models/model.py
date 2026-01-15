@@ -51,8 +51,9 @@ class GCN(torch.nn.Module):
 
     def decode(self, z, edge_label_index):
         # Dot Product Decoder
+        z = F.normalize(z, p=2, dim=-1)
         z = z[edge_label_index[0]] * z[edge_label_index[1]]
-        return z.sum(dim=-1)
+        return 10.0 * z.sum(dim=-1)
 
     def forward(self, data):
         # liefert nur z (Embeddings), Decoder separat aufrufen
