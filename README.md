@@ -37,7 +37,7 @@ Weitere Encoder (z. B. GraphSAGE, GAT) sind explizit vorgesehen und können übe
 
 ### Decoder
 - Aktuell: Dot-Product Decoder  
-  s(i,j) = z_i^T z_j
+  $s(i,j) = z_i^T z_j$
 - Ausgabe sind Logits, keine Wahrscheinlichkeiten
 
 Der Decoder ist bewusst separat gehalten, um alternative Scoring-Modelle (z. B. MLP- oder bilineare Decoder) einfach testen zu können.
