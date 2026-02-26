@@ -5,7 +5,7 @@ from torch_geometric.nn import GCNConv
 from sklearn.metrics import roc_auc_score, average_precision_score
 import pandas as pd
 import numpy as np
-
+from src.training.edge_features import edge_distance
 
 class Trainer:
 
@@ -103,7 +103,8 @@ class Trainer:
         for batch in train_loader:
             batch = batch.to(self.device)
             z = self.model.encode(batch.x, batch.edge_index)
-            logits = self.model.decode(z, batch.edge_label_index)
+            edge_attr = edge_distance(batch, batch.edge_label_index)
+            logits = self.model.decode(z, batch.edge_label_index, edge_attr)
             y = batch.edge_label.float()
             loss = self.criterion(logits, y)
             self.optimizer.zero_grad()
@@ -121,6 +122,7 @@ class Trainer:
         for batch in test_loader:
             batch = batch.to(self.device)
             z = self.model.encode(batch.x, batch.edge_index)
+            edge_attr = edge_distance(batch, batch.edge_label_index)
             logits = self.model.decode(z, batch.edge_label_index)
             scores = torch.sigmoid(logits).cpu().numpy()
             y = batch.edge_label.cpu().numpy()
@@ -138,7 +140,8 @@ class Trainer:
         for batch in val_loader:
             batch = batch.to(self.device)
             z = self.model.encode(batch.x, batch.edge_index)
-            logits = self.model.decode(z, batch.edge_label_index)
+            edge_attr = edge_distance(batch, batch.edge_label_index)
+            logits = self.model.decode(z, batch.edge_label_index, edge_attr)
             y = batch.edge_label.float()
             loss = self.criterion(logits, y)
             loss_all.append(loss.item())

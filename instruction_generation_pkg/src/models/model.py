@@ -2,59 +2,54 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
-from sklearn.metrics import roc_auc_score, average_precision_score
-import pandas as pd
-import numpy as np
 
-class GCN(torch.nn.Module):
+class GCN(nn.Module):
     """
-    A Graph Convolutional Network (GCN) model for link prediction tasks.
+    GCN for link prediction with an edge-aware decoder.
 
-    This model computes node embeddings via two stacked GCN layers and
-    uses a dot-product decoder to predict the existence of edges between
-    pairs of nodes. The design follows the common link prediction pipeline
-    in PyTorch Geometric, where `forward` produces embeddings and the
-    `decode` function maps candidate edges to scalar scores.
-
-    Parameters
-    ----------
-    in_channels : int
-        Dimensionality of the input node features.
-    hidden_channels : int
-        Number of hidden units in the first GCN layer.
-    out_channels : int
-        Dimensionality of the output embeddings (typically used for decoding).
-
-    Methods
-    -------
-    encode(x, edge_index)
-        Computes node embeddings by applying two GCN layers with ReLU
-        activation after the first layer.
-    decode(z, edge_label_index)
-        Computes edge scores for given pairs of nodes using a dot product
-        decoder. Returns a tensor of shape [num_edges].
-    forward(data)
-        Runs the encoder on the input graph data and returns node embeddings.
-        The decoder must be called separately on the embeddings and candidate
-        edge indices.
+    Encoder: 2x GCNConv -> node embeddings z
+    Decoder: MLP on pair features + edge_attr (e.g., distance)
     """
-    def __init__(self, in_channels, hidden_channels, out_channels):
+
+    def __init__(self, in_channels, hidden_channels, out_channels, edge_dim=1, decoder_hidden=128):
         super().__init__()
         self.conv1 = GCNConv(in_channels, hidden_channels)
         self.conv2 = GCNConv(hidden_channels, out_channels)
+
+        # Decoder: uses pairwise embedding features + edge_attr
+        in_dim = 4 * out_channels + edge_dim  # zu, zv, |diff|, prod, edge_attr
+        self.edge_mlp = nn.Sequential(
+            nn.Linear(in_dim, decoder_hidden),
+            nn.ReLU(),
+            nn.Linear(decoder_hidden, 1),
+        )
 
     def encode(self, x, edge_index):
         x = self.conv1(x, edge_index)
         x = F.relu(x)
         x = self.conv2(x, edge_index)
-        return x   # Knoteneinbettungen z
+        return x
 
-    def decode(self, z, edge_label_index):
-        # Dot Product Decoder
-        z = F.normalize(z, p=2, dim=-1)
-        z = z[edge_label_index[0]] * z[edge_label_index[1]]
-        return 10.0 * z.sum(dim=-1)
+    def decode(self, z, edge_label_index, edge_attr=None):
+        """
+        edge_attr: Tensor [E, edge_dim], e.g. distance features for each candidate edge.
+        If edge_attr is None, it defaults to zeros (so you can still run without it).
+        """
+        u, v = edge_label_index
+        zu, zv = z[u], z[v]
+
+        # Optional: keep normalization like your dot-product version (often helps)
+        zu = F.normalize(zu, p=2, dim=-1)
+        zv = F.normalize(zv, p=2, dim=-1)
+
+        pair_feat = torch.cat([zu, zv, (zu - zv).abs(), zu * zv], dim=1)  # [E, 4*out_channels]
+
+        if edge_attr is None:
+            edge_attr = torch.zeros((pair_feat.size(0), 1), device=pair_feat.device, dtype=pair_feat.dtype)
+
+        feat = torch.cat([pair_feat, edge_attr], dim=1)  # [E, 4*out + edge_dim]
+        logits = self.edge_mlp(feat).squeeze(-1)         # [E]
+        return logits
 
     def forward(self, data):
-        # liefert nur z (Embeddings), Decoder separat aufrufen
         return self.encode(data.x, data.edge_index)

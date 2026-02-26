@@ -21,11 +21,15 @@ class GlobalScaler():
         self.scaler = None
         self.ref_columns = None
 
-    def fit(self, model_ids: tuple,):
+    def fit(self, model_ids: tuple, drop_features: list | None = None):
         data = None
         for model_id in model_ids:
             parts = pd.read_csv(os.path.join(path, f"{model_id}.csv"))
-            X = parts.select_dtypes(include=("float64", "int64")) # filter non-numerical
+            X = parts.select_dtypes(include=("float64", "int64")).drop(columns=["part_id"])
+            
+            if drop_features:
+                X = X.drop(columns=drop_features, errors="ignore")
+                print(X.columns)
             if data is None:
                 data = X
             else:

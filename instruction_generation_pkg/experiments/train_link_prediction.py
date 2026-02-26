@@ -39,7 +39,9 @@ splitter = T.RandomLinkSplit(
 # 2. Build Global Scaler
 # -----------------------------
 print("\n[1] Fitting Global Scaler ...")
-global_scaler = GlobalScaler().fit(model_ids=model_ids)
+global_scaler = GlobalScaler().fit(model_ids=model_ids, drop_features=[
+    "x","y","z"
+])
 
 # -----------------------------
 # 3. Build Graphs and Datasets
@@ -147,7 +149,7 @@ results, running_history = runner.run()
 print("Finished!")
 
 # -----------------------------
-# 7. Visualizer
+# 7. Visualizer & Results
 # -----------------------------
 import pandas as pd
 

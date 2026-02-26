@@ -33,11 +33,15 @@ class GraphDataBuilder():
         return edge_index_undir
     
     def _build_graph(self,model_id,):
+        parts = pd.read_csv(os.path.join(path, f"{model_id}.csv")).sort_values("part_id").reset_index(drop=True)
         x = self.scaler.transform_to_tensor(model_id)
         graph_data = Data(x=x, edge_index=self._build_edge_index(model_id))
         graph_data.model_id = model_id
+
+        # Position (N, 3)
+        graph_data.pos = torch.tensor(parts[["x","y","z"]].values, dtype=torch.float32)
         return graph_data
-    
+
     def _build_all_graphs(self,):
         for model_id in self.model_ids:
             graph = self._build_graph(model_id)
