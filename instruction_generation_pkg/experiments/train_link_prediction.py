@@ -143,27 +143,27 @@ runner = experiment_runner.ExperimentRunner(
     config = config,
 )
 
-results = runner.run()
+results, running_history = runner.run()
 print("Finished!")
 
 # -----------------------------
 # 7. Visualizer
 # -----------------------------
-train_history = results[1]["history"]["train"]
-val_history = results[1]["history"]["val"]
+import pandas as pd
+
+df = pd.DataFrame.from_dict(results, orient="index")
+df.index.name = "run_id"
+df = df.reset_index()
+
+
+train_history = running_history[1]["train"]
+val_history = running_history[1]["val"]
 
 visualizer = Visualizer(history_train=train_history, history_val=val_history)
 visualizer.plot_loss()
-metrics = {"roc_auc" : list(), 
-           "ave_prec" : list()}
 
+print(df[["seed","roc_auc", "average_precision"]])
 
-for seed, run in results.items():
-    metrics["roc_auc"].append(run["metrics"]["roc_auc"])
-    metrics["ave_prec"].append(run["metrics"]["average_precision"])
-
-
-df = pd.DataFrame(metrics)
-print(df.head())
-print(df.mean())
-print(df.std())
+import os
+output_path = os.path.join(paths.CONFIG["paths"]["results"], "Results_df.csv")
+df.to_csv(output_path, index=False)

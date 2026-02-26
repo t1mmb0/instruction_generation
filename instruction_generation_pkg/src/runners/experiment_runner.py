@@ -13,6 +13,7 @@ class ExperimentRunner:
         self.executor = executor
         self.config = config
         self.results: Dict[int, dict] = {}
+        self.running_history: Dict[int, dict] = {}
 
     def run(self) -> Dict[int, dict]:
         self.results.clear()
@@ -23,12 +24,13 @@ class ExperimentRunner:
             print(f"RUN {run_idx} / {total_runs}   (seed = {seed})")
             print("=" * 60)     
             set_seed(seed)
-            run_result = self.executor.run(seed=seed,
+            summary, running_history = self.executor.run(seed=seed,
                                            config=self.config,
             )
-            self.results[seed] = run_result
-
-        return self.results
+            self.results[seed] = summary
+            self.running_history[seed] = running_history
+            
+        return self.results, self.running_history
 
         
         

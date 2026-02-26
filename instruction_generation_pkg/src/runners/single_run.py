@@ -1,5 +1,5 @@
 from src.runners.run_config import RunConfig
-
+import pandas as pd
 
 class SingleRunExecutor:
 
@@ -24,12 +24,21 @@ class SingleRunExecutor:
         trainer.fit(self.train_loader, self.val_loader, self.max_epochs)
         trainer.evaluate_model(self.test_loader)
         history, roc_auc, ave_prec = trainer._return_history()
-        return {
+         # 1) run-level summary (serialisierbar)
+
+        summary = {
             "seed": seed,
-            "trainer": trainer,
-            "history": history,
-            "metrics": {
-                "roc_auc": roc_auc,
-                "average_precision": ave_prec,
-            },
+            "best_epoch": trainer.best_epoch,
+            "best_val_loss": float(trainer.best_val_loss),
+            "roc_auc": None if roc_auc is None else float(roc_auc),
+            "average_precision": None if ave_prec is None else float(ave_prec),
+            "n_epochs": len(history.get("train", [])),
+            "final_train_loss": float(history["train"][-1]) if history.get("train") else None,
+            "final_val_loss": float(history["val"][-1]) if history.get("val") else None,
+            "model_class": type(model).__name__,
+            "optimizer_class": type(optimizer).__name__,
         }
+
+
+        return summary, history
+        
