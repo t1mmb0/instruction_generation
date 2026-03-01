@@ -158,8 +158,8 @@ df.index.name = "run_id"
 df = df.reset_index()
 
 
-train_history = running_history[1]["train"]
-val_history = running_history[1]["val"]
+train_history = running_history[2]["train"]
+val_history = running_history[2]["val"]
 
 visualizer = Visualizer(history_train=train_history, history_val=val_history)
 visualizer.plot_loss()

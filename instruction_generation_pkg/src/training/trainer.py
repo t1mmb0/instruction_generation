@@ -123,7 +123,7 @@ class Trainer:
             batch = batch.to(self.device)
             z = self.model.encode(batch.x, batch.edge_index)
             edge_attr = edge_distance(batch, batch.edge_label_index)
-            logits = self.model.decode(z, batch.edge_label_index)
+            logits = self.model.decode(z, batch.edge_label_index, edge_attr)
             scores = torch.sigmoid(logits).cpu().numpy()
             y = batch.edge_label.cpu().numpy()
             edges = batch.edge_label_index.cpu().T.numpy()
