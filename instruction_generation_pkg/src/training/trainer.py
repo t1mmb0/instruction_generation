@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import GCNConv
-from sklearn.metrics import roc_auc_score, average_precision_score
+from sklearn.metrics import roc_auc_score, average_precision_score, classification_report
 import pandas as pd
 import numpy as np
 from src.training.edge_features import edge_distance
@@ -47,7 +47,9 @@ class Trainer:
         scores = np.concatenate(batch_all["scores"])
         y = np.concatenate(batch_all["y"])
         edges = np.vstack(batch_all["edges"])
-
+        y_pred = (scores >= 0.5).astype(int)
+    
+        print(classification_report(y, y_pred, target_names=["not connected", "connected"]))
 
         roc_auc = roc_auc_score(y_true = y, y_score= scores)
         ave_prec = average_precision_score(y_true=y, y_score=scores)
