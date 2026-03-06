@@ -93,6 +93,7 @@ def model_builder():
         in_channels=in_channels,
         hidden_channels=hidden_channels,
         out_channels=out_channels,
+        edge_dim=2,
     ).to(device)
 
 def optimizer_builder(model):
