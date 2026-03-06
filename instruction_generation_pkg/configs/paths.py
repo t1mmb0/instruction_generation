@@ -14,6 +14,7 @@ CONFIG = {
         "features": os.path.join(ROOT_DIR, "data", "03_features"),
         "gt": os.path.join(ROOT_DIR, "data", "ground_truth"),
         "part_categories": os.path.join(ROOT_DIR, "data", "part_categories.csv"),
+        "ldraw": os.path.join(ROOT_DIR, "ldraw"),
 
         # Ergebnisse und Modelle
         "results": os.path.join(ROOT_DIR, "results"),
