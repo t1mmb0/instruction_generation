@@ -12,7 +12,7 @@ path = CONFIG["paths"]["ready"]
 gt_path = CONFIG["paths"]["gt"]
 
 # ------------------------------------------------
-# Step 2: DATA LOADER
+# Step 1: DATA LOADER
 # ------------------------------------------------
 
 class GraphDataBuilder():
@@ -61,7 +61,7 @@ class GraphDataBuilder():
         return self
     
 # ------------------------------------------------
-# Step X: Functionality Test
+# Step 2: Functionality Test
 # ------------------------------------------------
 from src.preprocessing.data_utils import GlobalScaler
 

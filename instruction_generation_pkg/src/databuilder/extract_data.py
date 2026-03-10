@@ -1,19 +1,38 @@
+# ------------------------------------------------
+# Step 0: IMPORTS
+# ------------------------------------------------
+
 from configs import paths
 import os
 import json
 import pandas as pd
 
+# ------------------------------------------------
+# Step 1: DATA EXTRACTION
+# ------------------------------------------------
 
+def build_datasets(root_dir, output_dir):
+    valid_models = extract_all(root_dir)
 
-root_dir = paths.CONFIG["paths"]["raw"]
+    for model_dir in valid_models:
+        try:
+            build_dataset(model_dir, output_dir)
+        except Exception as e:
+            print(f"Error processing {model_dir}: {e}")
 
-def get_model_dirs(root_dir):
-    model_dirs = []
-    for root, dirs, files in os.walk(root_dir):
-        for name in dirs:
-            model_dirs.append(os.path.join(root, name))
-    
-    return model_dirs
+def build_dataset(dataset_dir, output_dir):
+
+    dataset_name = os.path.basename(dataset_dir)
+    data = extract_one(dataset_dir)
+    occurrences_df = extract_occurrences(data)
+    joints_df =extract_joints(data)
+
+    occurrences_df.to_csv(os.path.join(output_dir, "parts", f"{dataset_name}_parts.csv"), index=False)
+    joints_df.to_csv(os.path.join(output_dir, "joints", f"{dataset_name}_joints.csv"), index=False)
+
+    print(f"Saved dataset for {dataset_name} with {len(occurrences_df)} parts and {len(joints_df)} joints to {output_dir}.")
+
+    return occurrences_df, joints_df
 
 def extract_all(root_dir):
     models = []
@@ -22,19 +41,24 @@ def extract_all(root_dir):
         for name in dirs:
             models.append(os.path.join(root, name))
 
-    for model in models:
-        assembly_file = extract_assembly_file(model)
+    for model in models:        
+        try:
+            assembly_file = extract_assembly_file(model)
+        except Exception as e:
+            print(f"Error processing {model}: {e}")
+            continue   
         data = read_assembly_file(assembly_file)
         if is_valid_assembly(data):
             valid_models.append(model)
     print(f"Extracted {len(models)} models, {len(valid_models)} are valid.")
+
     return valid_models
 
 def extract_one(model_dir):
         assembly_file = extract_assembly_file(model_dir)
         data = read_assembly_file(assembly_file)
-        return data
 
+        return data
 
 def extract_assembly_file(model_dir):
     assembly_file = os.path.join(model_dir, "assembly.json")
@@ -78,18 +102,42 @@ def extract_occurrences(data):
             "volume": props["volume"],
             "area": props["area"],
         })
-    return pd.DataFrame(rows).reset_index(drop=True)
+
+    return pd.DataFrame(rows)
+
+def extract_joints(data):
+    rows = []
+    for uuid, joint in data["joints"].items():
+        rows.append({
+            "part_id_1": joint["occurrence_one"],
+            "part_id_2": joint["occurrence_two"],
+            "joint_type": joint["joint_motion"]["joint_type"],
+        })
+
+    return pd.DataFrame(rows)
+
+# ------------------------------------------------
+# Step 2: HELPER FUNCTIONS
+# ------------------------------------------------
+
+root_dir = paths.CONFIG["paths"]["raw"]
+
+def get_model_dirs(root_dir):
+    model_dirs = []
+    for root, dirs, files in os.walk(root_dir):
+        for name in dirs:
+            model_dirs.append(os.path.join(root, name))
+    
+    return model_dirs
+
+# ------------------------------------------------
+# Step 3: TEST FUNCTIONALITY
+# ------------------------------------------------
+
 if __name__ == "__main__":
 
-    valid_models = extract_all(root_dir)
+    output_dir = paths.CONFIG["paths"]["output"]
+    root_dir = paths.CONFIG["paths"]["raw"]
 
-    model_dir = valid_models[0]
-    print(f"Processing model directory: {model_dir}")
-    data = extract_one(model_dir)
-
-    occurrences_df = extract_occurrences(data)
-    occurrences_df.to_csv(os.path.join(paths.CONFIG["paths"]["ready"], "occurrences.csv"), index=False)
-    print("Joints:", len(data.get("joints") or {}))
-    print("Contacts:", data.get("contacts"))
-    print("Holes:", len(data.get("holes") or []))
-    print(data["holes"][0])
+    build_datasets(root_dir, output_dir)
+    

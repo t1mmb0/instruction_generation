@@ -10,11 +10,10 @@ CONFIG = {
     "paths": {
         # Input-Daten
         "raw": os.path.join(ROOT_DIR, "data", "fusion360/assembly"),
-        "ready": os.path.join(ROOT_DIR, "data", "02_ready"),
-        "features": os.path.join(ROOT_DIR, "data", "03_features"),
-        "gt": os.path.join(ROOT_DIR, "data", "ground_truth"),
-        "part_categories": os.path.join(ROOT_DIR, "data", "part_categories.csv"),
-        "ldraw": os.path.join(ROOT_DIR, "ldraw"),
+        "output": os.path.join(ROOT_DIR, "data", "02_ready"),
+        "joints": os.path.join(ROOT_DIR, "data", "02_ready", "joints"),
+        "parts": os.path.join(ROOT_DIR, "data", "02_ready", "parts"),
+
 
         # Ergebnisse und Modelle
         "results": os.path.join(ROOT_DIR, "results"),
