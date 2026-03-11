@@ -11,8 +11,8 @@ import pandas as pd
 # Step 1: DATA EXTRACTION
 # ------------------------------------------------
 
-def build_datasets(root_dir, output_dir):
-    valid_models = extract_all(root_dir)
+def build_datasets(root_dir, output_dir, part_threshold=5, joint_threshold=4):
+    valid_models = extract_all(root_dir, part_threshold, joint_threshold)
 
     for model_dir in valid_models:
         try:
@@ -34,7 +34,7 @@ def build_dataset(dataset_dir, output_dir):
 
     return occurrences_df, joints_df
 
-def extract_all(root_dir):
+def extract_all(root_dir, part_threshold, joint_threshold):
     models = []
     valid_models = []
     for root, dirs, files in os.walk(root_dir):
@@ -48,7 +48,7 @@ def extract_all(root_dir):
             print(f"Error processing {model}: {e}")
             continue   
         data = read_assembly_file(assembly_file)
-        if is_valid_assembly(data):
+        if is_valid_assembly(data, part_threshold, joint_threshold):
             valid_models.append(model)
     print(f"Extracted {len(models)} models, {len(valid_models)} are valid.")
 
@@ -73,9 +73,9 @@ def read_assembly_file(assembly_file):
         
     return data
 
-def is_valid_assembly(data):
+def is_valid_assembly(data, part_threshold, joint_threshold):
     joints = data.get("joints") or {}
-    return len(data["occurrences"]) > 5 and len(joints) > 4
+    return len(data["occurrences"]) > part_threshold and len(joints) > joint_threshold
 
 def extract_occurrences(data):
     rows = []
@@ -139,5 +139,5 @@ if __name__ == "__main__":
     output_dir = paths.CONFIG["paths"]["output"]
     root_dir = paths.CONFIG["paths"]["raw"]
 
-    build_datasets(root_dir, output_dir)
+    build_datasets(root_dir, output_dir, part_threshold=30, joint_threshold=20)
     
