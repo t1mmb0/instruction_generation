@@ -7,6 +7,7 @@
 # -----------------------------
 import pandas as pd
 import numpy as np
+import os
 import torch
 from torch_geometric.loader import DataLoader
 import torch_geometric.transforms as T
@@ -15,7 +16,7 @@ from src.training.trainer import Trainer
 from src.training.regularizer import Regularizer
 from src.training.schedulers.base import SchedulerBuilder, SchedulerType
 from src.preprocessing.data_utils import GlobalScaler
-from src.data.build_graph import GraphDataBuilder
+from src.databuilder.build_graph import GraphDataBuilder
 from src.utils.general_utils import set_seed
 from src.utils.visualize_results import Visualizer
 from src.runners  import run_config, experiment_runner, component_factory, single_run
@@ -27,7 +28,11 @@ from configs import paths
 set_seed(42)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-model_ids = ("20006-1", "20009-1")
+dataset_ids = []
+for root, dirs, files in os.walk(paths.CONFIG["paths"]["parts"]):
+    for file in files:
+        dataset_ids.append(file)
+
 splitter = T.RandomLinkSplit(
     num_val=0.1,
     num_test=0.1,
@@ -39,7 +44,7 @@ splitter = T.RandomLinkSplit(
 # 2. Build Global Scaler
 # -----------------------------
 print("\n[1] Fitting Global Scaler ...")
-global_scaler = GlobalScaler().fit(model_ids=model_ids, drop_features=[
+global_scaler = GlobalScaler().fit(dataset_ids=dataset_ids, drop_features=[
     "x","y","z"
 ])
 
@@ -47,7 +52,7 @@ global_scaler = GlobalScaler().fit(model_ids=model_ids, drop_features=[
 # 3. Build Graphs and Datasets
 # -----------------------------
 print("\n[2] Building Graph Datasets ...")
-builder = GraphDataBuilder(scaler=global_scaler, splitter=splitter, model_ids=model_ids)
+builder = GraphDataBuilder(scaler=global_scaler, splitter=splitter, dataset_ids=dataset_ids)
 builder.build_dataset()
 
 # Check dataset stats
@@ -58,10 +63,12 @@ print(f"  -> {len(builder.test)} test graphs")
 # -----------------------------
 # 4. Create DataLoaders
 # -----------------------------
-train_loader = DataLoader(builder.train, batch_size=2, shuffle=True,)
-val_loader = DataLoader(builder.val, batch_size=2, shuffle=False,)
-test_loader = DataLoader(builder.test, batch_size=2, shuffle=False,)
+train_loader = DataLoader(builder.train, batch_size=16, shuffle=True,)
+val_loader = DataLoader(builder.val, batch_size=16, shuffle=False,)
+test_loader = DataLoader(builder.test, batch_size=16, shuffle=False,)
 
+for batch in val_loader:
+    print(batch.edge_label_index.shape)
 # -----------------------------
 # 5. Setup Parameters
 # -----------------------------
@@ -139,7 +146,6 @@ executor = single_run.SingleRunExecutor(
 # -----------------------------
 # 7. Experiment
 # -----------------------------
-
 
 runner = experiment_runner.ExperimentRunner(
     executor = executor,

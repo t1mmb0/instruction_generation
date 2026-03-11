@@ -27,8 +27,8 @@ def build_dataset(dataset_dir, output_dir):
     occurrences_df = extract_occurrences(data)
     joints_df =extract_joints(data)
 
-    occurrences_df.to_csv(os.path.join(output_dir, "parts", f"{dataset_name}_parts.csv"), index=False)
-    joints_df.to_csv(os.path.join(output_dir, "joints", f"{dataset_name}_joints.csv"), index=False)
+    occurrences_df.to_csv(os.path.join(output_dir, "parts", f"{dataset_name}.csv"), index=False)
+    joints_df.to_csv(os.path.join(output_dir, "joints", f"{dataset_name}.csv"), index=False)
 
     print(f"Saved dataset for {dataset_name} with {len(occurrences_df)} parts and {len(joints_df)} joints to {output_dir}.")
 
